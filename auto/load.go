@@ -5,7 +5,6 @@ import (
 
 	"github.com/playground/api/database"
 	"github.com/playground/api/models"
-	"github.com/playground/api/utils/console"
 )
 
 func Load() {
@@ -16,21 +15,32 @@ func Load() {
 
 	defer db.Close()
 
-	err = db.Debug().DropTableIfExists(&models.User{}).Error
+	err = db.Debug().DropTableIfExists(&models.Post{}, &models.User{}).Error
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	err = db.Debug().AutoMigrate(&models.User{}).Error
+	err = db.Debug().AutoMigrate(&models.User{}, &models.Post{}).Error
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	for _, user := range users {
-		err = db.Debug().Model(&models.User{}).Create(&user).Error
+	err = db.Debug().Model(&models.Post{}).AddForeignKey("author_id", "users(id)", "cascade", "cascade").Error
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for i, _ := range users {
+		err = db.Debug().Model(&models.User{}).Create(&users[i]).Error
 		if err != nil {
 			log.Fatal(err)
 		}
-		console.Pretty(user)
+
+		posts[i].AuthorID = users[i].ID
+
+		err = db.Debug().Model(&models.Post{}).Create(&posts[i]).Error
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 }
