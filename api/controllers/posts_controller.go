@@ -23,6 +23,7 @@ func GetPosts(w http.ResponseWriter, r *http.Request) {
 		responses.ERROR(w, http.StatusInternalServerError, err)
 		return
 	}
+	defer db.Close()
 
 	repo := crud.NewRepositoryPostsCRUD(db)
 
@@ -63,6 +64,7 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 		responses.ERROR(w, http.StatusInternalServerError, err)
 		return
 	}
+	defer db.Close()
 
 	repo := crud.NewRepositoryPostsCRUD(db)
 
@@ -72,7 +74,7 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 			responses.ERROR(w, http.StatusUnprocessableEntity, err)
 			return
 		}
-		w.Header().Set("Location", fmt.Sprintf("%s%s/%d", r.Host, r.RequestURI, post.ID))
+		w.Header().Set("Location", fmt.Sprintf("%s%s/%d", r.Host, r.URL.Path, post.ID))
 		responses.JSON(w, http.StatusCreated, post)
 	}(repo)
 }
@@ -91,6 +93,7 @@ func GetPost(w http.ResponseWriter, r *http.Request) {
 		responses.ERROR(w, http.StatusInternalServerError, err)
 		return
 	}
+	defer db.Close()
 
 	repo := crud.NewRepositoryPostsCRUD(db)
 
@@ -138,6 +141,7 @@ func UpdatePost(w http.ResponseWriter, r *http.Request) {
 		responses.ERROR(w, http.StatusInternalServerError, err)
 		return
 	}
+	defer db.Close()
 
 	repo := crud.NewRepositoryPostsCRUD(db)
 
@@ -165,6 +169,7 @@ func DeletePost(w http.ResponseWriter, r *http.Request) {
 		responses.ERROR(w, http.StatusInternalServerError, err)
 		return
 	}
+	defer db.Close()
 
 	repo := crud.NewRepositoryPostsCRUD(db)
 
