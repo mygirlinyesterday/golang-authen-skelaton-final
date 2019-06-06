@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -9,6 +10,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/playground/api/auth"
 	"github.com/playground/api/database"
 	"github.com/playground/api/models"
 	"github.com/playground/api/repository"
@@ -56,6 +58,17 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 	err = post.Validate()
 	if err != nil {
 		responses.ERROR(w, http.StatusUnprocessableEntity, err)
+		return
+	}
+
+	uid, err := auth.ExtractTokenID(r)
+	if err != nil {
+		responses.ERROR(w, http.StatusUnauthorized, err)
+		return
+	}
+
+	if uid != post.AuthorID {
+		responses.ERROR(w, http.StatusUnauthorized, errors.New(http.StatusText(http.StatusUnauthorized)))
 		return
 	}
 
@@ -164,6 +177,13 @@ func DeletePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	uid, err := auth.ExtractTokenID(r)
+	if err != nil {
+		responses.ERROR(w, http.StatusUnauthorized, err)
+		return
+	}
+	fmt.Println("USER:", uid)
+
 	db, err := database.Connect()
 	if err != nil {
 		responses.ERROR(w, http.StatusInternalServerError, err)
@@ -174,7 +194,7 @@ func DeletePost(w http.ResponseWriter, r *http.Request) {
 	repo := crud.NewRepositoryPostsCRUD(db)
 
 	func(postsRepository repository.PostRepository) {
-		_, err := postsRepository.Delete(pid)
+		_, err := postsRepository.Delete(pid, uid)
 		if err != nil {
 			responses.ERROR(w, http.StatusBadRequest, err)
 			return
